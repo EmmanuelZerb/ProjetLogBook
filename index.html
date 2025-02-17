@@ -65,6 +65,7 @@
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     <div class="login-container">
         <h2>Connexion</h2>
         <form action="/login" method="POST">
@@ -79,5 +80,22 @@
             <button type="submit">Se connecter</button>
         </form>
     </div>
+=======
+    <h1>Bienvenue sur ma page !</h1>
+    <div class="greeting" id="greeting"></div>
+
+    <script>
+        const names = ["Emmanuel", "Arthur", "Arthur"];
+        let message = "Salut ";
+        names.forEach((name, index) => {
+            message += name;
+            if (index < names.length - 1) {
+                message += ", ";
+            }
+        });
+        message += " ! 😊";
+        document.getElementById("greeting").innerText = message;
+    </script>
+>>>>>>> 4e009375c4fc9f5863baba5f9738d861fdb61672
 </body>
 </html>
