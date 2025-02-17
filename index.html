@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salut les amis !</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .greeting {
+            font-size: 20px;
+            color: #555;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bienvenue sur ma page !</h1>
+    <div class="greeting" id="greeting"></div>
+
+    <script>
+        const names = ["Emmanuel", "Arthur", "Arthut"];
+        let message = "Salut ";
+        names.forEach((name, index) => {
+            message += name;
+            if (index < names.length - 1) {
+                message += ", ";
+            }
+        });
+        message += " ! 😊";
+        document.getElementById("greeting").innerText = message;
+    </script>
+</body>
+</html>
