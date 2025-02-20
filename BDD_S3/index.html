@@ -106,6 +106,21 @@
            color: #2e7d32;
            display: none;
        }
+
+       #history-tab {
+           text-align: center;
+           padding: 20px;
+       }
+
+       .recording-item {
+           background-color: #f0f0f0;
+           margin: 10px 0;
+           padding: 10px;
+           border-radius: 5px;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+       }
    </style>
 </head>
 <body>
@@ -129,7 +144,8 @@
    </div>
 
    <div id="history-tab" class="tab-content" style="display: none;">
-       <p>Historique des enregistrements à venir...</p>
+       <h3>Mes enregistrements</h3>
+       <div id="recordingsList"></div>
    </div>
 
    <script>
@@ -146,12 +162,69 @@
                return;
            }
            document.getElementById('userEmail').textContent = user.email;
+           
+           // Charger l'historique des enregistrements
+           await loadRecordings();
        }
 
        async function logout() {
            await supabaseClient.auth.signOut();
-           localStorage.removeItem('user');
            window.location.href = 'auth.html';
+       }
+
+       async function loadRecordings() {
+           const { data: { user } } = await supabaseClient.auth.getUser();
+           const recordingsList = document.getElementById('recordingsList');
+           recordingsList.innerHTML = ''; // Nettoyer la liste précédente
+
+           try {
+               // Récupérer la liste des fichiers audio dans le dossier de l'utilisateur
+               const { data, error } = await supabaseClient.storage
+                   .from('recordings')
+                   .list(`audio/${user.id}`, {
+                       limit: 100,
+                       offset: 0,
+                       sortBy: { column: 'created_at', order: 'desc' }
+                   });
+
+               if (error) throw error;
+
+               if (data.length === 0) {
+                   recordingsList.innerHTML = '<p>Aucun enregistrement trouvé.</p>';
+                   return;
+               }
+
+               // Créer des éléments pour chaque enregistrement
+               for (const file of data) {
+                   const recordingItem = document.createElement('div');
+                   recordingItem.classList.add('recording-item');
+                   
+                   // Créer un lien pour télécharger l'audio
+                   const { data: { publicUrl } } = supabaseClient.storage
+                       .from('recordings')
+                       .getPublicUrl(`audio/${user.id}/${file.name}`);
+
+                   // Charger le texte correspondant
+                   const textFileName = file.name.replace('.wav', '.txt');
+                   const { data: textData } = await supabaseClient.storage
+                       .from('recordings')
+                       .getPublicUrl(`text/${user.id}/${textFileName}`);
+
+                   recordingItem.innerHTML = `
+                       <div>
+                           <strong>Enregistrement:</strong> ${file.name}
+                           <br>
+                           <a href="${publicUrl}" target="_blank">Écouter</a>
+                           <a href="${textData.publicUrl}" target="_blank">Voir la transcription</a>
+                       </div>
+                   `;
+
+                   recordingsList.appendChild(recordingItem);
+               }
+           } catch (error) {
+               console.error('Erreur lors du chargement des enregistrements:', error);
+               recordingsList.innerHTML = `<p>Erreur: ${error.message}</p>`;
+           }
        }
 
        let ws;
@@ -181,13 +254,24 @@
        }
 
        async function startRecording() {
-           const { data: { user } } = await supabaseClient.auth.getUser();
-           if (!user) {
+           const { data: { user }, error } = await supabaseClient.auth.getUser();
+           if (error || !user) {
                showStatus('Veuillez vous connecter', false);
                return;
            }
 
-           ws = new WebSocket(`ws://localhost:8765?userId=${user.id}`);
+           // Obtenir le token de session de manière plus robuste
+           const { data } = await supabaseClient.auth.getSession();
+           const token = data.session?.access_token;
+           if (!token) {
+               showStatus('Impossible de récupérer le token', false);
+               return;
+           }
+
+           // Construire l'URL WebSocket avec user ID et token
+           const wsUrl = `ws://localhost:8765?userId=${user.id}&token=${encodeURIComponent(token)}`;
+           
+           ws = new WebSocket(wsUrl);
            statusMessage.style.display = 'none';
            
            ws.onopen = () => {

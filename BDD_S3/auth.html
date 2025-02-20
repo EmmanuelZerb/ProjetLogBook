@@ -1,98 +1,141 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Authentification</title>
-   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-   <style>
-       body {
-           font-family: Arial, sans-serif;
-           max-width: 400px;
-           margin: 20px auto;
-           padding: 20px;
-       }
-       .form-group {
-           margin-bottom: 15px;
-       }
-       input {
-           width: 100%;
-           padding: 8px;
-           margin-top: 5px;
-       }
-       button {
-           width: 100%;
-           padding: 10px;
-           background-color: #4CAF50;
-           color: white;
-           border: none;
-           border-radius: 5px;
-           cursor: pointer;
-       }
-       .error {
-           color: red;
-           margin-top: 10px;
-       }
-   </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentification</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .toggle-form {
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-   <div id="auth-form">
-       <h2>Connexion</h2>
-       <div class="form-group">
-           <label for="email">Email</label>
-           <input type="email" id="email" required>
-       </div>
-       <div class="form-group">
-           <label for="password">Mot de passe</label>
-           <input type="password" id="password" required>
-       </div>
-       <button onclick="login()">Se connecter</button>
-       <p id="error-message" class="error"></p>
-   </div>
+    <div id="auth-form">
+        <h2 id="form-title">Connexion</h2>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" required>
+        </div>
+        <button id="auth-button">Se connecter</button>
+        <p id="error-message" class="error"></p>
+        <div class="toggle-form">
+            <a href="#" id="toggle-link">Pas de compte ? S'inscrire</a>
+        </div>
+    </div>
 
-   <script>
-       const supabaseClient = supabase.createClient(
-           'https://qhvdxwmjjfxocczbuhio.supabase.co',
-           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodmR4d21qamZ4b2NjemJ1aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NjQyNzgsImV4cCI6MjA1NTU0MDI3OH0.usp6Jgo4DK-M5strzUGY2pk7qdvnjQw9AQrhVFk-i-U'
-       );
+    <script>
+        const supabaseClient = supabase.createClient(
+            'https://qhvdxwmjjfxocczbuhio.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodmR4d21qamZ4b2NjemJ1aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NjQyNzgsImV4cCI6MjA1NTU0MDI3OH0.usp6Jgo4DK-M5strzUGY2pk7qdvnjQw9AQrhVFk-i-U'
+        );
 
-       async function login() {
-           const email = document.getElementById('email').value;
-           const password = document.getElementById('password').value;
-           const errorMessage = document.getElementById('error-message');
+        let isLoginMode = true;
+        const formTitle = document.getElementById('form-title');
+        const authButton = document.getElementById('auth-button');
+        const toggleLink = document.getElementById('toggle-link');
+        const errorMessage = document.getElementById('error-message');
 
-           try {
-               console.log("Tentative de connexion");
-               const response = await supabaseClient.auth.signInWithPassword({
-                   email: email,
-                   password: password
-               });
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            updateFormMode();
+        });
 
-               console.log("Réponse:", response);
+        function updateFormMode() {
+            if (isLoginMode) {
+                formTitle.textContent = 'Connexion';
+                authButton.textContent = 'Se connecter';
+                toggleLink.textContent = 'Pas de compte ? S\'inscrire';
+            } else {
+                formTitle.textContent = 'Inscription';
+                authButton.textContent = 'S\'inscrire';
+                toggleLink.textContent = 'Déjà un compte ? Se connecter';
+            }
+            errorMessage.textContent = '';
+        }
 
-               if (response.error) {
-                   throw response.error;
-               }
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                if (isLoginMode) {
+                    // Connexion
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
 
-               if (response.data.user) {
-                   console.log("Succès !");
-                   localStorage.setItem('user', JSON.stringify(response.data.user));
-                   window.location.href = 'index.html';
-               } else {
-                   errorMessage.textContent = "Une erreur est survenue";
-               }
-           } catch (error) {
-               console.error("Erreur:", error);
-               errorMessage.textContent = error.message;
-           }
-       }
+                    if (error) throw error;
 
-       window.onload = async function() {
-           const { data: { user } } = await supabaseClient.auth.getUser();
-           if (user) {
-               window.location.href = 'index.html';
-           }
-       }
-   </script>
+                    // Redirection après connexion réussie
+                    window.location.href = 'index.html';
+                } else {
+                    // Inscription
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email,
+                        password
+                    });
+
+                    if (error) throw error;
+
+                    // Vérifier si l'utilisateur a été créé
+                    if (data.user) {
+                        alert('Un email de vérification a été envoyé. Veuillez vérifier votre boîte de réception.');
+                        isLoginMode = true;
+                        updateFormMode();
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                errorMessage.textContent = error.message || 'Une erreur est survenue';
+            }
+        }
+
+        // Attacher l'événement de connexion/inscription
+        authButton.addEventListener('click', handleAuth);
+
+        // Vérifier si l'utilisateur est déjà connecté
+        window.onload = async function() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 </body>
 </html>

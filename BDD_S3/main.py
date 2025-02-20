@@ -15,9 +15,11 @@ from urllib.parse import parse_qs, urlparse
 
 # Chargement des variables d'environnement
 load_dotenv()
+
+# Configuration Supabase
 supabase = create_client(
     os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
+    os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 )
 
 # Configuration Audio
@@ -29,7 +31,7 @@ P = pyaudio.PyAudio()
 
 # Configuration Gladia
 GLADIA_API_URL = "https://api.gladia.io"
-GLADIA_API_KEY = "829f6ad3-380b-4502-a31c-2813133a6491"
+GLADIA_API_KEY = os.getenv("GLADIA_API_KEY")
 
 # Variable globale pour stocker les chunks audio
 audio_chunks = []
@@ -54,14 +56,35 @@ def init_gladia_session():
     )
     return response.json()
 
+async def verify_user(user_id, token):
+    """Vérifier l'authentification de l'utilisateur via Supabase"""
+    try:
+        # Vérifier le token côté serveur
+        user_response = supabase.auth.get_user(token)
+        
+        # Vérifier que l'ID utilisateur correspond
+        if user_response and hasattr(user_response, 'user') and user_response.user.id == user_id:
+            return True
+        return False
+    except Exception as e:
+        print(f"Erreur de vérification : {e}")
+        return False
+
 async def handle_websocket(websocket):
-    # Récupérer l'ID utilisateur de l'URL
+    # Récupérer l'ID utilisateur et le token de l'URL
     query = urlparse(websocket.path).query
     params = parse_qs(query)
     user_id = params.get('userId', [None])[0]
+    token = params.get('token', [None])[0]
 
-    if not user_id:
-        await websocket.close(1008, "User ID required")
+    if not user_id or not token:
+        await websocket.close(1008, "User ID et token requis")
+        return
+
+    # Vérifier l'authentification
+    is_authenticated = await verify_user(user_id, token)
+    if not is_authenticated:
+        await websocket.close(1008, "Authentification échouée")
         return
 
     print(f"Nouvelle connexion client établie pour l'utilisateur {user_id}")
@@ -88,7 +111,7 @@ async def handle_websocket(websocket):
                 while True:
                     data = stream.read(FRAMES_PER_BUFFER)
                     audio_chunks.append(data)  # Stocker chaque chunk
-                    audio_b64 = base64.b64encode(data).decode("utf-8")
+                    audio_b64 = base64.b64encode(data).decode("utf-8")                   
                     await gladia_ws.send(json.dumps({
                         "type": "audio_chunk",
                         "data": {"chunk": audio_b64}
