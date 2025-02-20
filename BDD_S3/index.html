@@ -1,190 +1,236 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transcription Audio en Direct</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Transcription Audio en Direct</title>
+   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+   <style>
+       body {
+           font-family: Arial, sans-serif;
+           max-width: 800px;
+           margin: 20px auto;
+           padding: 0 20px;
+       }
 
-        .tabs {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .tab-btn {
-            padding: 10px 20px;
-            margin: 0 5px;
-            border: none;
-            background: #f0f0f0;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        
-        .tab-btn.active {
-            background: #4CAF50;
-            color: white;
-        }
+       .user-info {
+           text-align: right;
+           padding: 10px;
+           margin-bottom: 20px;
+       }
 
-        .controls {
-            margin: 20px 0;
-            text-align: center;
-        }
+       .user-info button {
+           padding: 5px 10px;
+           margin-left: 10px;
+           background-color: #f44336;
+           color: white;
+       }
 
-        button {
-            padding: 12px 24px;
-            margin: 0 10px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
+       .tabs {
+           margin-bottom: 20px;
+           text-align: center;
+       }
+       
+       .tab-btn {
+           padding: 10px 20px;
+           margin: 0 5px;
+           border: none;
+           background: #f0f0f0;
+           cursor: pointer;
+           border-radius: 5px;
+       }
+       
+       .tab-btn.active {
+           background: #4CAF50;
+           color: white;
+       }
 
-        #startBtn {
-            background-color: #4CAF50;
-            color: white;
-        }
+       .controls {
+           margin: 20px 0;
+           text-align: center;
+       }
 
-        #startBtn:hover:not(:disabled) {
-            background-color: #45a049;
-        }
+       button {
+           padding: 12px 24px;
+           margin: 0 10px;
+           font-size: 16px;
+           cursor: pointer;
+           border: none;
+           border-radius: 5px;
+           transition: all 0.3s ease;
+       }
 
-        #stopBtn {
-            background-color: #f44336;
-            color: white;
-        }
+       #startBtn {
+           background-color: #4CAF50;
+           color: white;
+       }
 
-        #stopBtn:hover:not(:disabled) {
-            background-color: #da190b;
-        }
+       #startBtn:hover:not(:disabled) {
+           background-color: #45a049;
+       }
 
-        button:disabled {
-            background-color: #cccccc !important;
-            color: #666666;
-            cursor: not-allowed;
-            opacity: 0.7;
-            box-shadow: none;
-            pointer-events: none;
-        }
+       #stopBtn {
+           background-color: #f44336;
+           color: white;
+       }
 
-        #transcription {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            min-height: 200px;
-            background: white;
-            font-size: 1.1em;
-            line-height: 1.5;
-            margin-top: 20px;
-        }
+       #stopBtn:hover:not(:disabled) {
+           background-color: #da190b;
+       }
 
-        .status-message {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            display: none;
-        }
-    </style>
+       button:disabled {
+           background-color: #cccccc !important;
+           color: #666666;
+           cursor: not-allowed;
+           opacity: 0.7;
+           box-shadow: none;
+           pointer-events: none;
+       }
+
+       #transcription {
+           border: 1px solid #ddd;
+           border-radius: 8px;
+           padding: 20px;
+           min-height: 200px;
+           background: white;
+           font-size: 1.1em;
+           line-height: 1.5;
+           margin-top: 20px;
+       }
+
+       .status-message {
+           margin-top: 10px;
+           padding: 10px;
+           border-radius: 5px;
+           background-color: #e8f5e9;
+           color: #2e7d32;
+           display: none;
+       }
+   </style>
 </head>
 <body>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('record')">Enregistrer</button>
-        <button class="tab-btn" onclick="switchTab('history')">Historique</button>
-    </div>
+   <div class="user-info">
+       <span id="userEmail"></span>
+       <button onclick="logout()">Déconnexion</button>
+   </div>
+   
+   <div class="tabs">
+       <button class="tab-btn active" onclick="switchTab('record')">Enregistrer</button>
+       <button class="tab-btn" onclick="switchTab('history')">Historique</button>
+   </div>
 
-    <div id="record-tab" class="tab-content">
-        <div class="controls">
-            <button id="startBtn">Démarrer l'enregistrement</button>
-            <button id="stopBtn" disabled>Arrêter l'enregistrement</button>
-        </div>
-        <div id="transcription"></div>
-        <div id="statusMessage" class="status-message"></div>
-    </div>
+   <div id="record-tab" class="tab-content">
+       <div class="controls">
+           <button id="startBtn">Démarrer l'enregistrement</button>
+           <button id="stopBtn" disabled>Arrêter l'enregistrement</button>
+       </div>
+       <div id="transcription"></div>
+       <div id="statusMessage" class="status-message"></div>
+   </div>
 
-    <div id="history-tab" class="tab-content" style="display: none;">
-        <p>Historique des enregistrements à venir...</p>
-    </div>
+   <div id="history-tab" class="tab-content" style="display: none;">
+       <p>Historique des enregistrements à venir...</p>
+   </div>
 
-    <script>
-        let ws;
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const transcriptionDiv = document.getElementById('transcription');
-        const statusMessage = document.getElementById('statusMessage');
-        let fullText = '';
+   <script>
+       const supabaseClient = supabase.createClient(
+           'https://qhvdxwmjjfxocczbuhio.supabase.co',
+           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodmR4d21qamZ4b2NjemJ1aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NjQyNzgsImV4cCI6MjA1NTU0MDI3OH0.usp6Jgo4DK-M5strzUGY2pk7qdvnjQw9AQrhVFk-i-U'
+       );
 
-        function showStatus(message, isSuccess = true) {
-            statusMessage.style.display = 'block';
-            statusMessage.style.backgroundColor = isSuccess ? '#e8f5e9' : '#ffebee';
-            statusMessage.style.color = isSuccess ? '#2e7d32' : '#c62828';
-            statusMessage.textContent = message;
-        }
+       // Vérifier l'authentification
+       window.onload = async function() {
+           const { data: { user } } = await supabaseClient.auth.getUser();
+           if (!user) {
+               window.location.href = 'auth.html';
+               return;
+           }
+           document.getElementById('userEmail').textContent = user.email;
+       }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            document.getElementById(`${tabName}-tab`).style.display = 'block';
-            
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-        }
+       async function logout() {
+           await supabaseClient.auth.signOut();
+           localStorage.removeItem('user');
+           window.location.href = 'auth.html';
+       }
 
-        function startRecording() {
-            ws = new WebSocket('ws://localhost:8765');
-            statusMessage.style.display = 'none';
-            
-            ws.onopen = () => {
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                transcriptionDiv.textContent = '';
-                fullText = '';
-            };
-            
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'transcript') {
-                    transcriptionDiv.textContent = data.data.utterance.text.trim();
-                    if (data.data.is_final) {
-                        fullText += data.data.utterance.text.trim() + ' ';
-                        transcriptionDiv.textContent = fullText;
-                    }
-                }
-            };
-            
-            ws.onclose = () => {
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            };
+       let ws;
+       const startBtn = document.getElementById('startBtn');
+       const stopBtn = document.getElementById('stopBtn');
+       const transcriptionDiv = document.getElementById('transcription');
+       const statusMessage = document.getElementById('statusMessage');
+       let fullText = '';
 
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                showStatus('Erreur de connexion', false);
-            };
-        }
+       function showStatus(message, isSuccess = true) {
+           statusMessage.style.display = 'block';
+           statusMessage.style.backgroundColor = isSuccess ? '#e8f5e9' : '#ffebee';
+           statusMessage.style.color = isSuccess ? '#2e7d32' : '#c62828';
+           statusMessage.textContent = message;
+       }
 
-        function stopRecording() {
-            if (ws) {
-                showStatus('Sauvegarde en cours...');
-                ws.close();
-                showStatus('Enregistrement sauvegardé avec succès !');
-            }
-        }
+       function switchTab(tabName) {
+           document.querySelectorAll('.tab-content').forEach(tab => {
+               tab.style.display = 'none';
+           });
+           document.getElementById(`${tabName}-tab`).style.display = 'block';
+           
+           document.querySelectorAll('.tab-btn').forEach(btn => {
+               btn.classList.remove('active');
+           });
+           event.target.classList.add('active');
+       }
 
-        startBtn.addEventListener('click', startRecording);
-        stopBtn.addEventListener('click', stopRecording);
-    </script>
+       async function startRecording() {
+           const { data: { user } } = await supabaseClient.auth.getUser();
+           if (!user) {
+               showStatus('Veuillez vous connecter', false);
+               return;
+           }
+
+           ws = new WebSocket(`ws://localhost:8765?userId=${user.id}`);
+           statusMessage.style.display = 'none';
+           
+           ws.onopen = () => {
+               startBtn.disabled = true;
+               stopBtn.disabled = false;
+               transcriptionDiv.textContent = '';
+               fullText = '';
+           };
+           
+           ws.onmessage = (event) => {
+               const data = JSON.parse(event.data);
+               if (data.type === 'transcript') {
+                   transcriptionDiv.textContent = data.data.utterance.text.trim();
+                   if (data.data.is_final) {
+                       fullText += data.data.utterance.text.trim() + ' ';
+                       transcriptionDiv.textContent = fullText;
+                   }
+               }
+           };
+           
+           ws.onclose = () => {
+               startBtn.disabled = false;
+               stopBtn.disabled = true;
+           };
+
+           ws.onerror = (error) => {
+               console.error('WebSocket error:', error);
+               startBtn.disabled = false;
+               stopBtn.disabled = true;
+               showStatus('Erreur de connexion', false);
+           };
+       }
+
+       function stopRecording() {
+           if (ws) {
+               showStatus('Sauvegarde en cours...');
+               ws.close();
+               showStatus('Enregistrement sauvegardé avec succès !');
+           }
+       }
+
+       startBtn.addEventListener('click', startRecording);
+       stopBtn.addEventListener('click', stopRecording);
+   </script>
 </body>
 </html>
