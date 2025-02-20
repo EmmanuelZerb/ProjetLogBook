@@ -3,57 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentification</title>
+    <title>Connexion - Logbook</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-        .toggle-form {
-            text-align: center;
-            margin-top: 15px;
-        }
-    </style>
 </head>
-<body>
-    <div id="auth-form">
-        <h2 id="form-title">Connexion</h2>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <input type="password" id="password" required>
-        </div>
-        <button id="auth-button">Se connecter</button>
-        <p id="error-message" class="error"></p>
-        <div class="toggle-form">
-            <a href="#" id="toggle-link">Pas de compte ? S'inscrire</a>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-content">
+            <div class="auth-left">
+                <div class="auth-left-content">
+                    <div class="logo">
+                        <h1>Logbook</h1>
+                    </div>
+                    <p class="tagline">Des corrections à l'oral pour motiver les élèves et soulager les enseignants</p>
+                    <div class="space-type">
+                        <span>📚</span>
+                        <span>Espace réservé aux enseignants</span>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-right">
+                <div class="auth-form-container">
+                    <h2>Connexion</h2>
+                    
+                    <form id="auth-form" onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Mot de passe</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Se connecter</button>
+                        
+                        <p id="error-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -63,71 +51,28 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodmR4d21qamZ4b2NjemJ1aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NjQyNzgsImV4cCI6MjA1NTU0MDI3OH0.usp6Jgo4DK-M5strzUGY2pk7qdvnjQw9AQrhVFk-i-U'
         );
 
-        let isLoginMode = true;
-        const formTitle = document.getElementById('form-title');
-        const authButton = document.getElementById('auth-button');
-        const toggleLink = document.getElementById('toggle-link');
-        const errorMessage = document.getElementById('error-message');
-
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isLoginMode = !isLoginMode;
-            updateFormMode();
-        });
-
-        function updateFormMode() {
-            if (isLoginMode) {
-                formTitle.textContent = 'Connexion';
-                authButton.textContent = 'Se connecter';
-                toggleLink.textContent = 'Pas de compte ? S\'inscrire';
-            } else {
-                formTitle.textContent = 'Inscription';
-                authButton.textContent = 'S\'inscrire';
-                toggleLink.textContent = 'Déjà un compte ? Se connecter';
-            }
-            errorMessage.textContent = '';
-        }
-
-        async function handleAuth() {
+        async function handleLogin(event) {
+            event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
             
             try {
-                if (isLoginMode) {
-                    // Connexion
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({
-                        email,
-                        password
-                    });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
 
-                    if (error) throw error;
+                if (error) throw error;
 
-                    // Redirection après connexion réussie
+                if (data.user) {
                     window.location.href = 'index.html';
-                } else {
-                    // Inscription
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email,
-                        password
-                    });
-
-                    if (error) throw error;
-
-                    // Vérifier si l'utilisateur a été créé
-                    if (data.user) {
-                        alert('Un email de vérification a été envoyé. Veuillez vérifier votre boîte de réception.');
-                        isLoginMode = true;
-                        updateFormMode();
-                    }
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                errorMessage.textContent = error.message || 'Une erreur est survenue';
+                errorMessage.textContent = 'Email ou mot de passe incorrect';
             }
         }
-
-        // Attacher l'événement de connexion/inscription
-        authButton.addEventListener('click', handleAuth);
 
         // Vérifier si l'utilisateur est déjà connecté
         window.onload = async function() {

@@ -3,150 +3,77 @@
 <head>
    <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Transcription Audio en Direct</title>
+   <title>Logbook - Transcription Audio</title>
+   <link rel="stylesheet" href="styles.css">
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-   <style>
-       body {
-           font-family: Arial, sans-serif;
-           max-width: 800px;
-           margin: 20px auto;
-           padding: 0 20px;
-       }
-
-       .user-info {
-           text-align: right;
-           padding: 10px;
-           margin-bottom: 20px;
-       }
-
-       .user-info button {
-           padding: 5px 10px;
-           margin-left: 10px;
-           background-color: #f44336;
-           color: white;
-       }
-
-       .tabs {
-           margin-bottom: 20px;
-           text-align: center;
-       }
-       
-       .tab-btn {
-           padding: 10px 20px;
-           margin: 0 5px;
-           border: none;
-           background: #f0f0f0;
-           cursor: pointer;
-           border-radius: 5px;
-       }
-       
-       .tab-btn.active {
-           background: #4CAF50;
-           color: white;
-       }
-
-       .controls {
-           margin: 20px 0;
-           text-align: center;
-       }
-
-       button {
-           padding: 12px 24px;
-           margin: 0 10px;
-           font-size: 16px;
-           cursor: pointer;
-           border: none;
-           border-radius: 5px;
-           transition: all 0.3s ease;
-       }
-
-       #startBtn {
-           background-color: #4CAF50;
-           color: white;
-       }
-
-       #startBtn:hover:not(:disabled) {
-           background-color: #45a049;
-       }
-
-       #stopBtn {
-           background-color: #f44336;
-           color: white;
-       }
-
-       #stopBtn:hover:not(:disabled) {
-           background-color: #da190b;
-       }
-
-       button:disabled {
-           background-color: #cccccc !important;
-           color: #666666;
-           cursor: not-allowed;
-           opacity: 0.7;
-           box-shadow: none;
-           pointer-events: none;
-       }
-
-       #transcription {
-           border: 1px solid #ddd;
-           border-radius: 8px;
-           padding: 20px;
-           min-height: 200px;
-           background: white;
-           font-size: 1.1em;
-           line-height: 1.5;
-           margin-top: 20px;
-       }
-
-       .status-message {
-           margin-top: 10px;
-           padding: 10px;
-           border-radius: 5px;
-           background-color: #e8f5e9;
-           color: #2e7d32;
-           display: none;
-       }
-
-       #history-tab {
-           text-align: center;
-           padding: 20px;
-       }
-
-       .recording-item {
-           background-color: #f0f0f0;
-           margin: 10px 0;
-           padding: 10px;
-           border-radius: 5px;
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-       }
-   </style>
 </head>
 <body>
-   <div class="user-info">
-       <span id="userEmail"></span>
-       <button onclick="logout()">Déconnexion</button>
-   </div>
-   
-   <div class="tabs">
-       <button class="tab-btn active" onclick="switchTab('record')">Enregistrer</button>
-       <button class="tab-btn" onclick="switchTab('history')">Historique</button>
-   </div>
-
-   <div id="record-tab" class="tab-content">
-       <div class="controls">
-           <button id="startBtn">Démarrer l'enregistrement</button>
-           <button id="stopBtn" disabled>Arrêter l'enregistrement</button>
+   <header class="header">
+       <div class="container header-content">
+           <div class="logo">
+               <svg width="150" height="40" viewBox="0 0 150 40" xmlns="http://www.w3.org/2000/svg">
+                   <text x="0" y="30" font-family="Inter, sans-serif" font-size="24" font-weight="600" fill="#1F4D4D">Logbook</text>
+               </svg>
+           </div>
+           <div class="user-info">
+               <span class="user-name" id="userEmail"></span>
+               <button onclick="logout()" class="logout-btn">Déconnexion</button>
+           </div>
        </div>
-       <div id="transcription"></div>
-       <div id="statusMessage" class="status-message"></div>
-   </div>
+   </header>
 
-   <div id="history-tab" class="tab-content" style="display: none;">
-       <h3>Mes enregistrements</h3>
-       <div id="recordingsList"></div>
-   </div>
+   <main class="container dashboard">
+       <div class="stats-grid">
+           <div class="stat-card">
+               <h3>Enregistrements</h3>
+               <div class="value" id="totalRecordings">0</div>
+           </div>
+           <div class="stat-card">
+               <h3>Durée totale</h3>
+               <div class="value" id="totalDuration">0min</div>
+           </div>
+           <div class="stat-card">
+               <h3>Dernier enregistrement</h3>
+               <div class="value" id="lastRecording">-</div>
+           </div>
+       </div>
+
+       <nav class="tabs">
+           <button class="tab-btn active" onclick="switchTab('record')">
+               <span class="tab-icon">🎤</span>
+               Enregistrement
+           </button>
+           <button class="tab-btn" onclick="switchTab('history')">
+               <span class="tab-icon">📋</span>
+               Historique
+           </button>
+       </nav>
+
+       <div id="record-tab" class="tab-content">
+           <div class="record-section">
+               <h2>Nouvel enregistrement</h2>
+               <div class="controls">
+                   <button id="startBtn" class="record-btn">Démarrer l'enregistrement</button>
+                   <button id="stopBtn" class="record-btn" disabled>Arrêter l'enregistrement</button>
+               </div>
+               <div class="recording-status" id="recordingStatus" style="display: none;">
+                   <div class="recording-indicator"></div>
+                   <span>Enregistrement en cours...</span>
+               </div>
+               <div class="transcription-live">
+                   <h3>Transcription en direct</h3>
+                   <div id="transcription"></div>
+               </div>
+               <div id="statusMessage" class="status-message"></div>
+           </div>
+       </div>
+
+       <div id="history-tab" class="tab-content" style="display: none;">
+           <h2>Historique des enregistrements</h2>
+           <div id="recordingsList" class="recordings-grid"></div>
+       </div>
+   </main>
 
    <script>
        const supabaseClient = supabase.createClient(
@@ -154,7 +81,6 @@
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodmR4d21qamZ4b2NjemJ1aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NjQyNzgsImV4cCI6MjA1NTU0MDI3OH0.usp6Jgo4DK-M5strzUGY2pk7qdvnjQw9AQrhVFk-i-U'
        );
 
-       // Vérifier l'authentification
        window.onload = async function() {
            const { data: { user } } = await supabaseClient.auth.getUser();
            if (!user) {
@@ -162,9 +88,27 @@
                return;
            }
            document.getElementById('userEmail').textContent = user.email;
-           
-           // Charger l'historique des enregistrements
            await loadRecordings();
+           await updateStats();
+       }
+
+       async function updateStats() {
+           const { data: { user } } = await supabaseClient.auth.getUser();
+           const { data: audioFiles, error } = await supabaseClient.storage
+               .from('recordings')
+               .list(`audio/${user.id}`);
+
+           if (!error && audioFiles) {
+               document.getElementById('totalRecordings').textContent = audioFiles.length;
+               
+               if (audioFiles.length > 0) {
+                   const lastFile = audioFiles[audioFiles.length - 1];
+                   const date = new Date(lastFile.created_at);
+                   document.getElementById('lastRecording').textContent = date.toLocaleDateString();
+               }
+               
+               document.getElementById('totalDuration').textContent = `${audioFiles.length * 2}min`;
+           }
        }
 
        async function logout() {
@@ -175,11 +119,10 @@
        async function loadRecordings() {
            const { data: { user } } = await supabaseClient.auth.getUser();
            const recordingsList = document.getElementById('recordingsList');
-           recordingsList.innerHTML = ''; // Nettoyer la liste précédente
+           recordingsList.innerHTML = '';
 
            try {
-               // Récupérer la liste des fichiers audio dans le dossier de l'utilisateur
-               const { data, error } = await supabaseClient.storage
+               const { data: audioFiles, error } = await supabaseClient.storage
                    .from('recordings')
                    .list(`audio/${user.id}`, {
                        limit: 100,
@@ -189,37 +132,99 @@
 
                if (error) throw error;
 
-               if (data.length === 0) {
+               if (!audioFiles || audioFiles.length === 0) {
                    recordingsList.innerHTML = '<p>Aucun enregistrement trouvé.</p>';
                    return;
                }
 
-               // Créer des éléments pour chaque enregistrement
-               for (const file of data) {
-                   const recordingItem = document.createElement('div');
-                   recordingItem.classList.add('recording-item');
+               for (const file of audioFiles) {
+                   const recordingCard = document.createElement('div');
+                   recordingCard.classList.add('recording-card');
                    
-                   // Créer un lien pour télécharger l'audio
-                   const { data: { publicUrl } } = supabaseClient.storage
+                   const { data: audioData, error: audioError } = await supabaseClient.storage
                        .from('recordings')
-                       .getPublicUrl(`audio/${user.id}/${file.name}`);
+                       .download(`audio/${user.id}/${file.name}`);
 
-                   // Charger le texte correspondant
+                   if (audioError) {
+                       console.error("Erreur téléchargement audio:", audioError);
+                       continue;
+                   }
+
                    const textFileName = file.name.replace('.wav', '.txt');
-                   const { data: textData } = await supabaseClient.storage
+                   const { data: textFiles, error: textListError } = await supabaseClient.storage
                        .from('recordings')
-                       .getPublicUrl(`text/${user.id}/${textFileName}`);
+                       .list(`text/${user.id}`);
 
-                   recordingItem.innerHTML = `
-                       <div>
-                           <strong>Enregistrement:</strong> ${file.name}
-                           <br>
-                           <a href="${publicUrl}" target="_blank">Écouter</a>
-                           <a href="${textData.publicUrl}" target="_blank">Voir la transcription</a>
+                   let transcriptionText = "Transcription non disponible";
+                   let textContent = null;
+
+                   if (textFiles && textFiles.some(f => f.name === textFileName)) {
+                       const { data: textData, error: textError } = await supabaseClient.storage
+                           .from('recordings')
+                           .download(`text/${user.id}/${textFileName}`);
+
+                       if (textData && !textError) {
+                           textContent = textData;
+                           transcriptionText = await textData.text();
+                       }
+                   }
+
+                   const audioUrl = URL.createObjectURL(audioData);
+                   const date = new Date(file.created_at).toLocaleString();
+
+                   recordingCard.innerHTML = `
+                       <div class="recording-header">
+                           <div class="recording-info">
+                               <strong>Enregistrement</strong>
+                               <span>${date}</span>
+                           </div>
+                           <div class="recording-actions">
+                               <button class="btn-primary download-btn">Télécharger</button>
+                               <button class="btn view-btn">Détails</button>
+                           </div>
+                       </div>
+                       <div class="recording-content" style="display:none;">
+                           <audio controls controlsList="nodownload">
+                               <source src="${audioUrl}" type="audio/wav">
+                               Votre navigateur ne supporte pas l'audio.
+                           </audio>
+                           <div class="transcription">
+                               <h4>Transcription</h4>
+                               <p>${transcriptionText}</p>
+                           </div>
                        </div>
                    `;
 
-                   recordingsList.appendChild(recordingItem);
+                   const downloadBtn = recordingCard.querySelector('.download-btn');
+                   downloadBtn.addEventListener('click', async () => {
+                       const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+                       const audioDownloadUrl = URL.createObjectURL(audioBlob);
+                       const audioLink = document.createElement('a');
+                       audioLink.href = audioDownloadUrl;
+                       audioLink.download = file.name;
+                       audioLink.click();
+                       URL.revokeObjectURL(audioDownloadUrl);
+
+                       if (textContent) {
+                           const textBlob = new Blob([await textContent.text()], { type: 'text/plain' });
+                           const textDownloadUrl = URL.createObjectURL(textBlob);
+                           const textLink = document.createElement('a');
+                           textLink.href = textDownloadUrl;
+                           textLink.download = textFileName;
+                           textLink.click();
+                           URL.revokeObjectURL(textDownloadUrl);
+                       }
+                   });
+
+                   const viewBtn = recordingCard.querySelector('.view-btn');
+                   const contentDiv = recordingCard.querySelector('.recording-content');
+                   viewBtn.addEventListener('click', () => {
+                       const isHidden = contentDiv.style.display === 'none';
+                       contentDiv.style.display = isHidden ? 'block' : 'none';
+                       viewBtn.textContent = isHidden ? 'Masquer' : 'Détails';
+                   });
+
+                   recordingsList.appendChild(recordingCard);
                }
            } catch (error) {
                console.error('Erreur lors du chargement des enregistrements:', error);
@@ -227,17 +232,10 @@
            }
        }
 
-       let ws;
-       const startBtn = document.getElementById('startBtn');
-       const stopBtn = document.getElementById('stopBtn');
-       const transcriptionDiv = document.getElementById('transcription');
-       const statusMessage = document.getElementById('statusMessage');
-       let fullText = '';
-
        function showStatus(message, isSuccess = true) {
+           const statusMessage = document.getElementById('statusMessage');
            statusMessage.style.display = 'block';
-           statusMessage.style.backgroundColor = isSuccess ? '#e8f5e9' : '#ffebee';
-           statusMessage.style.color = isSuccess ? '#2e7d32' : '#c62828';
+           statusMessage.className = `status-message ${isSuccess ? 'status-success' : 'status-error'}`;
            statusMessage.textContent = message;
        }
 
@@ -251,7 +249,19 @@
                btn.classList.remove('active');
            });
            event.target.classList.add('active');
+
+           if (tabName === 'history') {
+               loadRecordings();
+               updateStats();
+           }
        }
+
+       let ws;
+       const startBtn = document.getElementById('startBtn');
+       const stopBtn = document.getElementById('stopBtn');
+       const transcriptionDiv = document.getElementById('transcription');
+       const recordingStatus = document.getElementById('recordingStatus');
+       let fullText = '';
 
        async function startRecording() {
            const { data: { user }, error } = await supabaseClient.auth.getUser();
@@ -260,25 +270,23 @@
                return;
            }
 
-           // Obtenir le token de session de manière plus robuste
-           const { data } = await supabaseClient.auth.getSession();
-           const token = data.session?.access_token;
-           if (!token) {
-               showStatus('Impossible de récupérer le token', false);
+           const { data: { session } } = await supabaseClient.auth.getSession();
+           if (!session) {
+               showStatus('Impossible de récupérer la session', false);
                return;
            }
 
-           // Construire l'URL WebSocket avec user ID et token
+           const token = session.access_token;
            const wsUrl = `ws://localhost:8765?userId=${user.id}&token=${encodeURIComponent(token)}`;
            
            ws = new WebSocket(wsUrl);
-           statusMessage.style.display = 'none';
            
            ws.onopen = () => {
                startBtn.disabled = true;
                stopBtn.disabled = false;
                transcriptionDiv.textContent = '';
                fullText = '';
+               recordingStatus.style.display = 'flex';
            };
            
            ws.onmessage = (event) => {
@@ -295,12 +303,14 @@
            ws.onclose = () => {
                startBtn.disabled = false;
                stopBtn.disabled = true;
+               recordingStatus.style.display = 'none';
            };
 
            ws.onerror = (error) => {
                console.error('WebSocket error:', error);
                startBtn.disabled = false;
                stopBtn.disabled = true;
+               recordingStatus.style.display = 'none';
                showStatus('Erreur de connexion', false);
            };
        }
@@ -310,6 +320,9 @@
                showStatus('Sauvegarde en cours...');
                ws.close();
                showStatus('Enregistrement sauvegardé avec succès !');
+               setTimeout(() => {
+                   updateStats();
+               }, 1000);
            }
        }
 

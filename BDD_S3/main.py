@@ -7,7 +7,7 @@ from websockets.server import serve
 import requests
 import os
 from dotenv import load_dotenv
-from supabase import create_client
+from supabase import create_client, Client
 import wave
 import io
 import time
@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, urlparse
 load_dotenv()
 
 # Configuration Supabase
-supabase = create_client(
+supabase: Client = create_client(
     os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 )
@@ -63,7 +63,7 @@ async def verify_user(user_id, token):
         user_response = supabase.auth.get_user(token)
         
         # Vérifier que l'ID utilisateur correspond
-        if user_response and hasattr(user_response, 'user') and user_response.user.id == user_id:
+        if user_response and user_response.user and user_response.user.id == user_id:
             return True
         return False
     except Exception as e:
@@ -111,7 +111,7 @@ async def handle_websocket(websocket):
                 while True:
                     data = stream.read(FRAMES_PER_BUFFER)
                     audio_chunks.append(data)  # Stocker chaque chunk
-                    audio_b64 = base64.b64encode(data).decode("utf-8")                   
+                    audio_b64 = base64.b64encode(data).decode("utf-8")
                     await gladia_ws.send(json.dumps({
                         "type": "audio_chunk",
                         "data": {"chunk": audio_b64}
